@@ -1,0 +1,29 @@
+server:
+  port: 8003
+
+spring:
+  datasource:
+    url: jdbc:sqlite:T:/MyApp/zhaopin-win-amd64/jobs.db #开发
+#    url: jdbc:sqlite:jobs.db  # 生产
+    driver-class-name: org.sqlite.JDBC
+    username: ''
+    password: ''
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/public/,classpath:/dist/
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: com.example.backend.config.SQLiteDialect
+logging:
+  level:
+    root: INFO
+    com.example.backend: DEBUG
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%thread][%X{traceId}]){blue} %clr([%file]){magenta} %clr(%-5level){green} %clr(%logger{36}.%M:%line){cyan} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId}] %caller{1}:%line - %msg%n"
+  file:
+    path: logs
+    name: ${logging.file.path}/app.log

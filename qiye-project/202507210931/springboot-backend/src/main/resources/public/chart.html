@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职位数据图表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 70vh;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .filter {
+            margin-right: 15px;
+        }
+        h1 {
+            color: #333;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 10px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>职位数据趋势图表</h1>
+    
+    <div class="controls">
+        <button id="renderBtn">渲染图表</button>
+        <label class="filter">
+            城市:
+            <select id="cityFilter">
+                <option value="">全部</option>
+            </select>
+        </label>
+        <label class="filter">
+            职位类型:
+            <select id="jobTypeFilter">
+                <option value="">全部</option>
+            </select>
+        </label>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="jobChart"></canvas>
+        <div class="legend" id="chartLegend"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let chartData = [];
+        let cities = new Set();
+        let jobTypes = new Set();
+        let filteredData = [];
+
+        // DOM elements
+        const renderBtn = document.getElementById('renderBtn');
+        const cityFilter = document.getElementById('cityFilter');
+        const jobTypeFilter = document.getElementById('jobTypeFilter');
+        const canvas = document.getElementById('jobChart');
+        const ctx = canvas.getContext('2d');
+        const legend = document.getElementById('chartLegend');
+
+        // Set canvas size
+        function setCanvasSize() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        // Fetch data from API
+        async function fetchChartData() {
+            try {
+                const response = await fetch('/api/jobs/chart-data');
+                chartData = await response.json();
+                
+                // Extract unique cities and job types
+                chartData.forEach(item => {
+                    cities.add(item.city);
+                    jobTypes.add(item.query_type);
+                });
+                
+                // Populate filter dropdowns
+                populateFilters();
+                
+                return chartData;
+            } catch (error) {
+                console.error('Error fetching chart data:', error);
+            }
+        }
+
+        // Populate filter dropdowns
+        function populateFilters() {
+            // Clear existing options
+            cityFilter.innerHTML = '<option value="">全部</option>';
+            jobTypeFilter.innerHTML = '<option value="">全部</option>';
+            
+            // Add city options
+            Array.from(cities).sort().forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+            
+            // Add job type options
+            Array.from(jobTypes).sort().forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                jobTypeFilter.appendChild(option);
+            });
+        }
+
+        // Process data for chart
+        function processChartData() {
+            // Apply filters
+            const selectedCity = cityFilter.value;
+            const selectedJobType = jobTypeFilter.value;
+            
+            filteredData = chartData;
+            if (selectedCity) {
+                filteredData = filteredData.filter(item => item.city === selectedCity);
+            }
+            if (selectedJobType) {
+                filteredData = filteredData.filter(item => item.query_type === selectedJobType);
+            }
+            
+            // Group data by city-job_type combinations
+            const groupedData = {};
+            filteredData.forEach(item => {
+                const key = `${item.city}-${item.query_type}`;
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        city: item.city,
+                        query_type: item.query_type,
+                        dates: [],
+                        counts: []
+                    };
+                }
+                groupedData[key].dates.push(new Date(item.date).getTime());
+                groupedData[key].counts.push(item.job_count);
+            });
+            
+            return Object.values(groupedData);
+        }
+
+        // Draw chart
+        function drawChart() {
+            const processedData = processChartData();
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (processedData.length === 0) {
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('没有数据可显示', canvas.width / 2, canvas.height / 2);
+                legend.innerHTML = '';
+                return;
+            }
+            
+            // Update legend
+            updateLegend(processedData);
+            
+            // Find min and max values for scaling
+            let minDate = Infinity;
+            let maxDate = -Infinity;
+            let maxCount = -Infinity;
+            
+            processedData.forEach(series => {
+                series.dates.forEach(date => {
+                    if (date < minDate) minDate = date;
+                    if (date > maxDate) maxDate = date;
+                });
+                
+                series.counts.forEach(count => {
+                    if (count > maxCount) maxCount = count;
+                });
+            });
+            
+            // Add some padding
+            const padding = 40;
+            const chartWidth = canvas.width - 2 * padding;
+            const chartHeight = canvas.height - 2 * padding;
+            
+            // Draw axes
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.strokeStyle = '#000';
+            ctx.stroke();
+            
+            // Draw axis labels
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('日期', canvas.width / 2, canvas.height - 10);
+            
+            ctx.save();
+            ctx.translate(10, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('职位数量', 0, 0);
+            ctx.restore();
+            
+            // Draw grid lines and labels
+            const dateRange = maxDate - minDate;
+            const countRange = maxCount;
+            
+            // X-axis labels (dates)
+            const dateStep = dateRange / 5;
+            for (let i = 0; i <= 5; i++) {
+                const dateValue = minDate + i * dateStep;
+                const x = padding + (dateValue - minDate) / dateRange * chartWidth;
+                
+                // Grid line
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, canvas.height - padding);
+                ctx.strokeStyle = '#eee';
+                ctx.stroke();
+                
+                // Label
+                ctx.textAlign = 'center';
+                ctx.fillText(new Date(dateValue).toISOString().split('T')[0], x, canvas.height - padding + 20);
+            }
+            
+            // Y-axis labels (counts)
+            const countStep = Math.ceil(countRange / 5);
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const countValue = i * countStep;
+                const y = canvas.height - padding - (countValue / countRange) * chartHeight;
+                
+                // Grid line
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.strokeStyle = '#eee';
+                ctx.stroke();
+                
+                // Label
+                ctx.fillText(countValue, padding - 5, y + 4);
+            }
+            
+            // Draw lines
+            processedData.forEach((series, index) => {
+                // Generate a color based on index
+                const hue = (index * 137) % 360;
+                const color = `hsl(${hue}, 70%, 50%)`;
+                
+                ctx.beginPath();
+                series.dates.forEach((date, i) => {
+                    const x = padding + (date - minDate) / dateRange * chartWidth;
+                    const y = canvas.height - padding - (series.counts[i] / countRange) * chartHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw points
+                series.dates.forEach((date, i) => {
+                    const x = padding + (date - minDate) / dateRange * chartWidth;
+                    const y = canvas.height - padding - (series.counts[i] / countRange) * chartHeight;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                });
+            });
+        }
+
+        // Update legend
+        function updateLegend(data) {
+            legend.innerHTML = '';
+            
+            data.forEach((series, index) => {
+                const hue = (index * 137) % 360;
+                const color = `hsl(${hue}, 70%, 50%)`;
+                
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = color;
+                
+                const label = document.createElement('span');
+                label.textContent = `${series.city} - ${series.query_type}`;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(label);
+                legend.appendChild(legendItem);
+            });
+        }
+
+        // Initialize the page
+        async function init() {
+            await fetchChartData();
+            setCanvasSize();
+            renderBtn.addEventListener('click', drawChart);
+            
+            // Redraw on window resize
+            window.addEventListener('resize', () => {
+                setCanvasSize();
+                drawChart();
+            });
+        }
+
+        // Start when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

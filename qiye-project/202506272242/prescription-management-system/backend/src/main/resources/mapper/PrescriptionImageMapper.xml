@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prescription.mapper.PrescriptionImageMapper">
+  <resultMap id="BaseResultMap" type="com.example.prescription.entity.PrescriptionImage">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="prescription_id" jdbcType="INTEGER" property="prescriptionId" />
+    <result column="image_path" jdbcType="VARCHAR" property="imagePath" />
+    <result column="image_type" jdbcType="VARCHAR" property="imageType" />
+    <result column="sort_order" jdbcType="INTEGER" property="sortOrder" />
+    <result column="created_time" jdbcType="VARCHAR" property="createdTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from prescription_image
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insertPrescriptionImage" parameterType="com.example.prescription.entity.PrescriptionImage" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO prescription_image
+    (prescription_id, image_path, image_type, sort_order, created_time)
+    VALUES
+    (#{prescriptionId}, #{imagePath}, #{imageType}, #{sortOrder}, CURRENT_TIMESTAMP)
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.example.prescription.entity.PrescriptionImage">
+    update prescription_image
+    set prescription_id = #{prescriptionId,jdbcType=INTEGER},
+      image_path = #{imagePath,jdbcType=VARCHAR},
+      image_type = #{imageType,jdbcType=VARCHAR},
+      sort_order = #{sortOrder,jdbcType=INTEGER},
+      created_time = #{createdTime,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, prescription_id, image_path, image_type, sort_order, created_time
+    from prescription_image
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, prescription_id, image_path, image_type, sort_order, created_time
+    from prescription_image
+  </select>
+  <select id="selectByPrescriptionId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT * FROM prescription_image WHERE prescription_id = #{prescriptionId}
+  </select>
+
+  <delete id="deletePrescriptionImageByPrescriptionIds" parameterType="list">
+    DELETE FROM prescription_image WHERE prescription_id IN
+    <foreach collection="list" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </delete>
+
+
+</mapper>

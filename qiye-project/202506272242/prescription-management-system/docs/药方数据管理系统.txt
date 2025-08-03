@@ -1,0 +1,473 @@
+
+药方数据管理系统需求规格说明书
+
+一、系统概述
+
+1.1 系统定位
+
+本药方数据管理系统旨在为医疗机构打造高效、安全、稳定的药方全生命周期管理平台。实现药方及药品数据的新增、查询、修改、删除等核心功能，支持医生、药师等多角色权限管理；同时，通过图片展示功能直观呈现药方配伍与药品信息，满足日常药方管理及临床用药指导需求。
+
+1.2 核心目标
+
+标准化管理：建立药方、药品信息的统一数据标准
+可视化展示：通过图片与结构化文本直观呈现药方配伍及药品特性
+权限可控：实现不同角色对药方数据的分级访问与操作权限
+高效交互：提供简洁易用的前后端交互界面与操作流程
+二、功能性需求
+
+2.1 前端功能需求
+
+2.1.1 用户认证模块
+
+登录注册：支持用户名/密码登录，提供密码强度校验与账号锁定机制
+权限展示：根据用户角色（医生/药师/管理员）动态渲染功能菜单与操作按钮
+Token管理：实现JWT Token的自动刷新与过期提醒
+2.1.2 药方管理模块
+
+新增药方：
+支持输入药方名称、适应症、用法用量、治疗周期
+集成药品选择器，支持多选关联药品
+图片上传区域支持拖拽上传，实时预览缩略图
+查询药方：
+支持名称、适应症关键词模糊搜索
+分页展示药方列表，包含基础信息与图片预览
+编辑药方：
+可修改药方所有字段信息
+支持增删关联药品、替换图片
+删除药方：提供二次确认弹窗，支持批量删除操作
+2.1.3 药品管理模块
+
+新增药品：输入药品名称、规格、生产厂家、适应症等信息
+查询药品：支持名称搜索，展示药品详情与关联药方
+编辑药品：可修改药品信息，更新关联药方数据
+图片管理：上传药品实物图、说明书图片，支持图片排序与删除
+2.2 后端功能需求
+
+2.2.1 用户认证模块
+
+JWT认证：
+生成包含用户ID、角色、权限范围的Token
+实现Token黑名单校验与IP绑定机制
+权限控制：
+基于RBAC模型实现接口级权限控制
+定义角色权限范围：
+医生：可新增、查询、编辑个人创建的药方
+药师：可查询所有药方，审核药方数据
+管理员：拥有全模块操作权限
+2.2.2 药方管理模块
+
+数据存储：
+结构化存储药方核心信息至 prescription 表
+通过 prescription_drug 表维护药方与药品关联关系
+图片路径存储至 prescription_image 表
+业务逻辑：
+新增/修改时校验数据完整性（如必填字段、药品关联有效性）
+删除时级联处理关联数据（药品关联记录、图片文件删除）
+实现药方版本管理，记录修改历史
+2.2.3 药品管理模块
+
+基础CRUD：实现药品信息的增删改查功能
+关联管理：维护药品与药方的双向关联关系
+数据校验：
+药品名称唯一性检查
+图片文件格式与大小限制
+三、非功能性需求
+
+3.1 性能需求
+
+响应时间：90%的查询请求响应时间＜1秒
+并发处理：支持50+用户同时在线操作
+数据加载：药方列表页采用分页加载，单次加载数据≤20条
+3.2 安全需求
+
+3.2.1 数据安全
+
+存储安全：
+密码采用BCrypt算法加密存储
+敏感数据（如药品库存）加密处理
+传输安全：强制启用HTTPS协议，防止数据劫持
+备份恢复：
+每日自动备份主库数据
+支持按时间点恢复数据
+3.2.2 操作安全
+
+权限审计：记录所有敏感操作日志（删除、修改药方等）
+防攻击策略：
+防止SQL注入、XSS攻击
+限制接口请求频率，防范恶意攻击
+3.3 兼容性需求
+
+浏览器兼容：支持Chrome、Firefox、Edge最新版本
+操作系统：后端支持Linux、Windows Server；前端无特定系统要求
+四、接口需求
+
+4.1 前端API接口
+
+接口路径 方法 功能描述 权限要求 
+/api/prescriptions POST 新增药方 医生/管理员 /api/prescriptions/{id} GET 获取药方详情 所有角色 /api/prescriptions GET 分页查询药方 所有角色 /api/prescriptions/{id} PUT 更新药方 医生/管理员 /api/prescriptions/{id} DELETE 删除药方 医生/管理员 /api/prescriptions/{id}/images POST 上传药方图片 医生/管理员 /api/drugs POST 新增药品 药师/管理员 /api/drugs/{id}/images POST 上传药品图片 药师/管理员
+
+4.2 数据库接口
+
+SQLite主库：处理所有写操作（INSERT/UPDATE/DELETE）
+SQLite从库：承担所有读操作（SELECT）
+数据同步：通过SQLite的ATTACH DATABASE实现主从数据异步同步
+
+
+5.2 软件依赖
+
+后端：Java 21、Spring Boot 3、MyBatis3、SQLite JDBC驱动
+前端：Node.js 14+、Vue 3、Element Plus
+
+二、系统架构设计
+
+2.1 整体架构图
+
++----------------+ | Vue 3 前端 | +----------------+ ↑ ↓ HTTP +----------------+ | Spring Boot 3 | | REST API | +----------------+ ↑ ↓ JDBC +----------------+ | SQLite 主库 | | (写操作) | +----------------+ ↓ 数据同步 +----------------+ | SQLite 从库 | | (读操作) | +----------------+  
+
+2.2 技术架构说明
+
+前端层：
+
+使用Vue 3构建SPA，通过Vue Router实现路由动态加载
+采用Vuex 4进行全局状态管理，Axios封装API请求
+集成Element Plus组件库实现表单、表格等UI交互
+新增图片上传组件，支持药方/药品多图展示
+后端层：
+
+基于Spring Boot 3搭建微服务架构，分离业务模块
+使用MyBatis实现SQLite读写分离配置
+集成Spring Security实现JWT认证与RBAC权限控制
+采用AOP切面编程实现日志记录与异常统一处理
+数据库层：
+
+主从分离架构：主库负责写操作，从库承担查询负载
+配置PRAGMA journal_mode = WAL提升并发性能
+使用SQLite的ATTACH DATABASE实现多库协同
+设计图片存储方案：文件系统存储图片，数据库记录路径
+
+三、数据库设计
+
+3.1 数据库选型与配置
+
+SQLite主从配置：
+
+-- 主库配置 PRAGMA journal_mode = WAL; PRAGMA wal_autocheckpoint = 5000; PRAGMA synchronous = NORMAL;
+
+-- 从库附加配置 ATTACH DATABASE 'prescription_read.db' AS read_db; -- 从库只读设置 PRAGMA read_db.query_only = true;  
+
+3.2 数据库表结构设计
+
+药方数据管理系统数据库表设计
+一、核心表结构设计
+1. 药方表 (prescription)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+prescription_name	VARCHAR(100)	药方名称（如 "胃溃疡四联疗法"）	NOT NULL, UNIQUE
+indications	TEXT	适应症（多症状用逗号分隔）	NOT NULL
+usage	TEXT	用法用量（包含服用顺序、频次）	NOT NULL
+treatment_cycle	VARCHAR(50)	治疗周期（如 "5 天 / 疗程"）	
+created_time	DATETIME	创建时间	DEFAULT CURRENT_TIMESTAMP
+created_by	INTEGER	创建人 ID	REFERENCES user(id)
+updated_time	DATETIME	最后更新时间	
+updated_by	INTEGER	更新人 ID	REFERENCES user(id)
+
+索引设计：
+
+创建idx_prescription_name索引：CREATE INDEX idx_prescription_name ON prescription(prescription_name);
+创建idx_prescription_indication索引：CREATE INDEX idx_prescription_indication ON prescription(indications);
+2. 药品表 (drug)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+drug_name	VARCHAR(100)	药品名称（如 "奥美拉唑"）	NOT NULL, UNIQUE
+specification	VARCHAR(50)	规格（如 "20mg / 片"）	
+manufacturer	VARCHAR(100)	生产厂家	
+indications	TEXT	药品适应症	
+created_time	DATETIME	创建时间	DEFAULT CURRENT_TIMESTAMP
+created_by	INTEGER	创建人 ID	REFERENCES user(id)
+updated_time	DATETIME	最后更新时间	
+updated_by	INTEGER	更新人 ID	REFERENCES user(id)
+
+索引设计：
+
+创建idx_drug_name索引：CREATE INDEX idx_drug_name ON drug(drug_name);
+3. 药方 - 药品关联表 (prescription_drug)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+prescription_id	INTEGER	药方 ID	REFERENCES prescription(id)
+drug_id	INTEGER	药品 ID	REFERENCES drug(id)
+dosage	VARCHAR(50)	药品用量（如 "20mg / 次"）	NOT NULL
+
+索引设计：
+
+创建联合唯一索引idx_prescription_drug：CREATE UNIQUE INDEX idx_prescription_drug ON prescription_drug(prescription_id, drug_id);
+4. 药方图片表 (prescription_image)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+prescription_id	INTEGER	药方 ID	REFERENCES prescription(id)
+image_path	VARCHAR(255)	图片存储路径	NOT NULL
+image_type	VARCHAR(20)	图片类型（配伍图 / 示意图等）	NOT NULL
+sort_order	INTEGER	图片排序	DEFAULT 0
+created_time	DATETIME	上传时间	DEFAULT CURRENT_TIMESTAMP
+
+索引设计：
+
+创建idx_prescription_image索引：CREATE INDEX idx_prescription_image ON prescription_image(prescription_id);
+5. 药品图片表 (drug_image)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+drug_id	INTEGER	药品 ID	REFERENCES drug(id)
+image_path	VARCHAR(255)	图片存储路径（实物图 / 说明书）	NOT NULL
+image_type	VARCHAR(20)	图片类型	NOT NULL
+sort_order	INTEGER	图片排序	DEFAULT 0
+created_time	DATETIME	上传时间	DEFAULT CURRENT_TIMESTAMP
+
+索引设计：
+
+创建idx_drug_image索引：CREATE INDEX idx_drug_image ON drug_image(drug_id);
+6. 用户表 (user)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+username	VARCHAR(50)	用户名	NOT NULL, UNIQUE
+password	VARCHAR(100)	加密密码	NOT NULL
+real_name	VARCHAR(50)	真实姓名	
+role	VARCHAR(20)	用户角色 (doctor/pharmacist/admin)	NOT NULL
+enabled	BOOLEAN	账户是否启用	NOT NULL, DEFAULT TRUE
+created_time	DATETIME	创建时间	DEFAULT CURRENT_TIMESTAMP
+
+索引设计：
+
+创建idx_user_username索引：CREATE UNIQUE INDEX idx_user_username ON user(username);
+7. 权限表 (authority)
+字段名	数据类型	说明	约束条件
+id	INTEGER	主键，自增 ID	PRIMARY KEY
+user_id	INTEGER	用户 ID	REFERENCES user(id)
+authority	VARCHAR(50)	权限标识（如 "prescription:create"）	NOT NULL
+
+索引设计：
+
+创建联合唯一索引idx_user_authority：CREATE UNIQUE INDEX idx_user_authority ON authority(user_id, authority);
+
+四、后端架构设计
+
+4.2 核心模块设计
+
+药方管理模块：
+
+新增药方：接收药方名称、适应症、用法用量、治疗周期等信息，校验后存入 prescription 表；同时处理药方关联药品及图片信息。
+分页查询：从从库读取 prescription 表数据，支持根据药方名称、适应症等条件过滤，关联查询所需药品及图片信息。
+修改药方：事务控制更新 prescription 表及关联的 prescription_drug 表；若涉及图片更新，同步处理图片上传与路径存储。
+删除药方：级联删除 prescription_image 表、 prescription_drug 表中相关记录，最后删除 prescription 表中的药方数据。
+4.3 接口设计
+
+药方API：
+
+POST /api/prescriptions - 新增药方（请求体包含药方名称、适应症、用法用量、治疗周期、关联药品ID数组、图片文件数组） GET /api/prescriptions/{id} - 获取药方详情（包含关联药品信息、图片路径） GET /api/prescriptions - 分页查询药方（支持名称、适应症模糊查询） PUT /api/prescriptions/{id} - 更新药方 DELETE /api/prescriptions/{id} - 删除药方 POST /api/prescriptions/{id}/images - 上传药方图片  
+
+五、前端架构设计
+
+5.2 组件架构
+
+业务流程优化：
+
+药方编辑页：包含药方名称、适应症、用法用量、治疗周期输入框；药品选择器（可多选关联药品）；图片上传区域（展示已上传图片缩略图）。
+药方详情页：展示药方名称、适应症、用法用量、治疗周期；药品列表展示关联药品信息及跳转药品详情页按钮
+
+
+3.3 数据库连接配置
+
+Spring Boot 3配置文件：
+
+主库配置
+spring.datasource.primary.url=jdbc:sqlite:prescription_write.db spring.datasource.primary.driver-class-name=org.sqlite.JDBC
+
+从库配置
+spring.datasource.slave.url=jdbc:sqlite:prescription_read.db spring.datasource.slave.driver-class-name=org.sqlite.JDBC
+
+MyBatis读写分离配置
+
+
+四、后端架构设计
+
+4.1 技术栈选择
+
+核心框架：
+
+Java 21：运行环境，支持新特性与性能优化
+Spring Boot 3：快速构建微服务，整合MyBatis
+MyBatis：实现SQLite读写分离与CRUD操作
+Spring Security：JWT认证 + RBAC权限控制
+Spring AOP：日志记录、权限校验切面
+4.2 核心模块设计
+
+药方管理模块：
+
+新增药方：校验数据合法性，关联药品与图片
+分页查询：从从库读取数据，支持条件过滤
+修改药方：事务控制更新主库及关联表
+删除药方：级联删除关联药品与图片记录
+药品管理模块：
+
+药品CRUD：实现基本增删改查功能
+图片管理：上传/删除药品相关图片
+数据校验：药品名称唯一性检查
+权限控制模块：
+
+基于角色的API权限控制（医生/药师/管理员）
+药方操作权限细化（仅创建者可修改）
+图片上传权限隔离
+4.3 接口设计
+
+药方 API：
+
+plaintext
+POST /api/prescriptions         - 新增药方
+GET  /api/prescriptions/{id}    - 获取药方详情
+GET  /api/prescriptions         - 分页查询药方
+PUT  /api/prescriptions/{id}    - 更新药方
+DELETE /api/prescriptions/{id}   - 删除药方
+POST /api/prescriptions/{id}/images - 上传药方图片
+
+
+药品 API：
+
+plaintext
+POST /api/drugs                 - 新增药品
+GET  /api/drugs/{id}            - 获取药品详情
+GET  /api/drugs                 - 分页查询药品
+PUT  /api/drugs/{id}            - 更新药品
+DELETE /api/drugs/{id}           - 删除药品
+POST /api/drugs/{id}/images      - 上传药品图片
+
+
+药方管理模块：
+
+新增药方：校验数据合法性，关联药品与图片
+分页查询：从从库读取数据，支持条件过滤
+修改药方：事务控制更新主库及关联表
+删除药方：级联删除关联药品与图片记录
+
+药品管理模块：
+
+药品 CRUD：实现基本增删改查功能
+图片管理：上传 / 删除药品相关图片
+数据校验：药品名称唯一性检查
+
+权限控制模块：
+
+基于角色的 API 权限控制（医生 / 药师 / 管理员）
+药方操作权限细化（仅创建者可修改）
+图片上传权限隔离
+
+核心框架：
+
+Java 21：运行环境，支持新特性与性能优化
+Spring Boot 3：快速构建微服务，整合 MyBatis
+MyBatis：实现 SQLite 读写分离与 CRUD 操作
+Spring Security：JWT 认证 + RBAC 权限控制
+Spring AOP：日志记录、权限校验切面
+
+4.4 安全设计
+
+数据安全：
+
+敏感字段加密存储（如药品库存等）
+文件系统权限控制，仅允许服务器访问图片目录
+定期备份主库数据，支持增量恢复
+传输安全：
+JWT Token加入IP绑定与设备指纹校验
+
+五、前端架构设计
+
+5.1 技术栈选择
+
+核心框架：
+
+Vue 3 + Vite：快速构建单页应用
+Vue Router 4：动态路由加载与权限守卫
+Vuex 4：全局状态管理
+Element Plus：UI组件库
+axios：封装API请求与错误处理
+5.2 组件架构
+
+新增组件：
+
+ImageUploader：多图片上传组件（支持药方/药品）
+ImageViewer：图片预览组件（支持缩放、旋转）
+业务流程优化：
+
+药方编辑页：集成药品选择器与图片上传入口
+药品详情页：图片轮播展示实物图与说明书
+权限控制：根据用户角色动态隐藏操作按钮
+5.3 状态管理设计
+
+Vuex Store扩展：
+
+const state = { currentPrescription: null, // 当前编辑药方 prescriptionImages: [], // 药方图片列表 drugImages: {} // 药品图片映射表 }
+
+const mutations = { SET_CURRENT_PRESCRIPTION(state, data) { state.currentPrescription = data; }, ADD_PRESCRIPTION_IMAGE(state, image) { state.prescriptionImages.push(image); } }
+
+
+
+4.1 技术栈选择
+核心框架：
+
+Java 21：运行环境，支持新特性与性能优化
+Spring Boot 3：快速构建微服务，整合 MyBatis
+MyBatis：实现 SQLite 读写分离与 CRUD 操作
+Spring Security：JWT 认证 + RBAC 权限控制
+Spring AOP：日志记录、权限校验切面
+4.2 核心模块设计
+药方管理模块：
+
+新增药方：校验数据合法性，关联药品与图片
+分页查询：从从库读取数据，支持条件过滤
+修改药方：事务控制更新主库及关联表
+删除药方：级联删除关联药品与图片记录
+
+药品管理模块：
+
+药品 CRUD：实现基本增删改查功能
+图片管理：上传 / 删除药品相关图片
+数据校验：药品名称唯一性检查
+
+权限控制模块：
+
+基于角色的 API 权限控制（医生 / 药师 / 管理员）
+药方操作权限细化（仅创建者可修改）
+图片上传权限隔离
+4.3 接口设计
+药方 API：
+
+plaintext
+POST /api/prescriptions         - 新增药方
+GET  /api/prescriptions/{id}    - 获取药方详情
+GET  /api/prescriptions         - 分页查询药方
+PUT  /api/prescriptions/{id}    - 更新药方
+DELETE /api/prescriptions/{id}   - 删除药方
+POST /api/prescriptions/{id}/images - 上传药方图片
+
+药品 API：
+
+plaintext
+POST /api/drugs                 - 新增药品
+GET  /api/drugs/{id}            - 获取药品详情
+GET  /api/drugs                 - 分页查询药品
+PUT  /api/drugs/{id}            - 更新药品
+DELETE /api/drugs/{id}           - 删除药品
+POST /api/drugs/{id}/images      - 上传药品图片
+
+4.4 安全设计
+数据安全：
+
+敏感字段加密存储（如药品库存等）
+文件系统权限控制，仅允许服务器访问图片目录
+定期备份主库数据，支持增量恢复
+
+传输安全：
+JWT Token 加入 IP 绑定与设备指纹校验
+
+
+ Spring Boot 3.x + Java 21
+
+
+

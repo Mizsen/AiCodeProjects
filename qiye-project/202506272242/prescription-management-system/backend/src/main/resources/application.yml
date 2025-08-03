@@ -1,0 +1,58 @@
+server:
+  port: 8001
+  tomcat:
+    max-http-form-post-size: 100MB
+
+spring:
+  datasource:
+    primary:
+      jdbc-url: jdbc:sqlite:file:data/prescription_write.db?mode=rwc
+      driver-class-name: org.sqlite.JDBC
+      hikari:
+        maximum-pool-size: 1
+        connection-timeout: 30000
+    slave:
+      jdbc-url: jdbc:sqlite:file:data/prescription_read.db?mode=rwc
+      driver-class-name: org.sqlite.JDBC
+      hikari:
+        maximum-pool-size: 1
+        connection-timeout: 30000
+  task:
+    scheduling:
+      pool:
+        size: 5 # 定时任务线程池大小（默认1）
+      thread-name-prefix: sync- # 线程名前缀
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/public/,classpath:/dist/
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml # 支持多级目录
+  type-aliases-package: com.example.prescription.entity # 实体类包路径
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+jwt:
+  #  secret: 5412c88c60e25a5ceb145e5a0390db80
+  #  expiration: 3600
+  header: Authorization
+
+logging:
+  #  config: classpath:logback-produce.xml
+  level:
+    root: INFO
+    com.example.prescription: DEBUG
+    # com.example.prescription.mapper: DEBUG
+    # org.mybatis: DEBUG
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr([%thread][%X{traceId}]){blue} %clr([%file]){magenta} %clr(%-5level){green} %clr(%logger{36}.%M:%line){cyan} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId}] %caller{1}:%line - %msg%n"
+  file:
+    path: logs
+    name: ${logging.file.path}/prescription-app.log
+
+#debug: true

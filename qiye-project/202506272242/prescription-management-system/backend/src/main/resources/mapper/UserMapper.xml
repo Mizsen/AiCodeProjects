@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prescription.mapper.UserMapper">
+  <resultMap id="BaseResultMap" type="com.example.prescription.entity.User">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="username" jdbcType="VARCHAR" property="username" />
+    <result column="password" jdbcType="VARCHAR" property="password" />
+    <result column="real_name" jdbcType="VARCHAR" property="realName" />
+    <result column="role" jdbcType="VARCHAR" property="role" />
+    <result column="enabled" jdbcType="INTEGER" property="enabled" />
+    <result column="created_time" jdbcType="VARCHAR" property="createdTime" />
+    <result column="last_login_time" jdbcType="VARCHAR" property="lastLoginTime" />
+    <result column="last_login_ip" jdbcType="VARCHAR" property="lastLoginIp" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from user
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.example.prescription.entity.User">
+    insert into user (id, username, password, 
+      real_name, role, enabled, 
+      created_time, last_login_time, last_login_ip
+      )
+    values (#{id,jdbcType=INTEGER}, #{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, 
+      #{realName,jdbcType=VARCHAR}, #{role,jdbcType=VARCHAR}, #{enabled,jdbcType=INTEGER}, 
+      #{createdTime,jdbcType=VARCHAR}, #{lastLoginTime,jdbcType=VARCHAR}, #{lastLoginIp,jdbcType=VARCHAR}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.example.prescription.entity.User">
+    update user
+    set username = #{username,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR},
+      real_name = #{realName,jdbcType=VARCHAR},
+      role = #{role,jdbcType=VARCHAR},
+      enabled = #{enabled,jdbcType=INTEGER},
+      created_time = #{createdTime,jdbcType=VARCHAR},
+      last_login_time = #{lastLoginTime,jdbcType=VARCHAR},
+      last_login_ip = #{lastLoginIp,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, username, password, real_name, role, enabled, created_time, last_login_time, 
+    last_login_ip
+    from user
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, username, password, real_name, role, enabled, created_time, last_login_time, last_login_ip
+    from user
+  </select>
+  <select id="selectByUsername" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select id, username, password, real_name, role, enabled, created_time, last_login_time, 
+    last_login_ip
+    from user
+    where username = #{username,jdbcType=VARCHAR}
+  </select>
+</mapper>

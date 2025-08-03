@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prescription.mapper.DrugMapper">
+  <resultMap id="BaseResultMap" type="com.example.prescription.entity.Drug">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="drug_name" jdbcType="VARCHAR" property="drugName" />
+    <result column="specification" jdbcType="VARCHAR" property="specification" />
+    <result column="manufacturer" jdbcType="VARCHAR" property="manufacturer" />
+    <result column="indications" jdbcType="VARCHAR" property="indications" />
+    <result column="created_time" jdbcType="VARCHAR" property="createdTime" />
+    <result column="created_by" jdbcType="INTEGER" property="createdBy" />
+    <result column="updated_time" jdbcType="VARCHAR" property="updatedTime" />
+    <result column="updated_by" jdbcType="INTEGER" property="updatedBy" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from drug
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.example.prescription.entity.Drug">
+    insert into drug (id, drug_name, specification, 
+      manufacturer, indications, created_time, 
+      created_by, updated_time, updated_by
+      )
+    values (#{id,jdbcType=INTEGER}, #{drugName,jdbcType=VARCHAR}, #{specification,jdbcType=VARCHAR}, #{manufacturer,jdbcType=VARCHAR}, #{indications,jdbcType=VARCHAR}, #{createdTime,jdbcType=VARCHAR}, #{createdBy,jdbcType=INTEGER}, #{updatedTime,jdbcType=VARCHAR}, #{updatedBy,jdbcType=INTEGER}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.example.prescription.entity.Drug">
+    update drug
+    set drug_name = #{drugName,jdbcType=VARCHAR},
+      specification = #{specification,jdbcType=VARCHAR},
+      manufacturer = #{manufacturer,jdbcType=VARCHAR},
+      indications = #{indications,jdbcType=VARCHAR},
+      created_time = #{createdTime,jdbcType=VARCHAR},
+      created_by = #{createdBy,jdbcType=INTEGER},
+      updated_time = #{updatedTime,jdbcType=VARCHAR},
+      updated_by = #{updatedBy,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, drug_name, specification, manufacturer, indications, created_time, created_by, 
+    updated_time, updated_by
+    from drug
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, drug_name, specification, manufacturer, indications, created_time, created_by, 
+    updated_time, updated_by
+    from drug
+  </select>
+  <insert id="insertDrug" parameterType="com.example.prescription.entity.Drug" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO drug
+        (drug_name, specification, manufacturer, indications, created_time, created_by, updated_time, updated_by)
+        VALUES
+        (#{drugName}, #{specification}, #{manufacturer}, #{indications}, CURRENT_TIMESTAMP, #{createdBy}, #{updatedTime}, #{updatedBy})
+  </insert>
+
+  <update id="updateDrugById" parameterType="com.example.prescription.entity.Drug">
+        UPDATE drug
+        SET
+            drug_name = #{drugName},
+            specification = #{specification},
+            manufacturer = #{manufacturer},
+            indications = #{indications},
+            updated_time = CURRENT_TIMESTAMP,
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+  </update>
+
+  <delete id="deleteDrugById" parameterType="int">
+        DELETE FROM drug WHERE id = #{id}
+  </delete>
+
+  <select id="selectDrugDetailById" parameterType="int" resultMap="BaseResultMap">
+        SELECT * FROM drug WHERE id = #{id}
+  </select>
+
+  <select id="pageQueryDrug" resultMap="BaseResultMap">
+        SELECT *
+        FROM drug
+    <where>
+      <if test="name != null and name != ''">
+                AND drug_name LIKE '%' || #{name} || '%'
+      </if>
+      <if test="indications != null and indications != ''">
+            AND indications LIKE '%' || #{indications} || '%'
+      </if>
+    </where>
+        ORDER BY created_time DESC
+        LIMIT #{size} OFFSET #{offset}
+  </select>
+
+  <select id="countDrug" resultType="int">
+        SELECT COUNT(*)
+        FROM drug
+    <where>
+      <if test="name != null and name != ''">
+                AND drug_name LIKE '%' || #{name} || '%'
+      </if>
+    </where>
+  </select>
+
+  <select id="countByDrugName" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM drug WHERE drug_name = #{name}
+  </select>
+</mapper>

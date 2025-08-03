@@ -1,0 +1,38 @@
+# ide
+/.vscode/
+/**/.vscode
+/.comate/
+/**/.comate/
+/**/.idea/
+/.idea/
+
+# Node.js
+/**/node_modules/
+
+
+/**/dist/
+
+qiye-project/202506091014/blog-system/frontend/dist
+qiye-project/202506272242/prescription-management-system/frontend/dist/
+
+
+
+# java
+
+# 忽略所有目录中的 target 文件夹
+/**/target/
+# qiye-project/202506091014/blog-system/backend/target
+
+# 忽略所有目录中的 log 文件夹
+/**/logs/
+/**/log/
+*.log
+
+# file
+/**/upload/
+
+# dir
+/qiye-project/202506091014/blog-system/backend/.idea
+
+
+qiye-project/202507210931/python-crawler/login_data.json

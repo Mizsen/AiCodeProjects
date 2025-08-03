@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prescription.mapper.DrugImageMapper">
+  <resultMap id="BaseResultMap" type="com.example.prescription.entity.DrugImage">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="drug_id" jdbcType="INTEGER" property="drugId" />
+    <result column="image_path" jdbcType="VARCHAR" property="imagePath" />
+    <result column="image_type" jdbcType="VARCHAR" property="imageType" />
+    <result column="sort_order" jdbcType="INTEGER" property="sortOrder" />
+    <result column="created_time" jdbcType="VARCHAR" property="createdTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from drug_image
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.example.prescription.entity.DrugImage">
+    insert into drug_image (id, drug_id, image_path, 
+      image_type, sort_order, created_time
+      )
+    values (#{id,jdbcType=INTEGER}, #{drugId,jdbcType=INTEGER}, #{imagePath,jdbcType=VARCHAR}, 
+      #{imageType,jdbcType=VARCHAR}, #{sortOrder,jdbcType=INTEGER}, #{createdTime,jdbcType=VARCHAR}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.example.prescription.entity.DrugImage">
+    update drug_image
+    set drug_id = #{drugId,jdbcType=INTEGER},
+      image_path = #{imagePath,jdbcType=VARCHAR},
+      image_type = #{imageType,jdbcType=VARCHAR},
+      sort_order = #{sortOrder,jdbcType=INTEGER},
+      created_time = #{createdTime,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, drug_id, image_path, image_type, sort_order, created_time
+    from drug_image
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, drug_id, image_path, image_type, sort_order, created_time
+    from drug_image
+  </select>
+  <insert id="insertDrugImage" parameterType="com.example.prescription.entity.DrugImage" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO drug_image
+    (drug_id, image_path, image_type, sort_order, created_time)
+    VALUES
+    (#{drugId}, #{imagePath}, #{imageType}, #{sortOrder}, CURRENT_TIMESTAMP)
+  </insert>
+  <delete id="deleteDrugImageById" parameterType="int">
+    DELETE FROM drug_image WHERE id = #{id}
+  </delete>
+  <delete id="deleteByDrugId" parameterType="int">
+    DELETE FROM drug_image WHERE drug_id = #{id}
+  </delete>
+  <select id="selectImagesByDrugId" resultMap="BaseResultMap">
+    SELECT * FROM drug_image WHERE drug_id = #{drugId}
+  </select>
+</mapper>

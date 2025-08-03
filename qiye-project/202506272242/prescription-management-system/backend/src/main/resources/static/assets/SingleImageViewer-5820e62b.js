@@ -1,0 +1,1 @@
+import{_ as s,f as c,g as a,l as r}from"./index-adc39c24.js";const t={name:"SingleImageViewer",props:{src:{type:String,required:!0}}},_={class:"single-image-viewer"},n=["src"];function i(o,l,e,g,d,m){return c(),a("div",_,[r("img",{src:e.src,alt:"Image Viewer",class:"image"},null,8,n)])}const f=s(t,[["render",i],["__scopeId","data-v-8ac5fc88"]]);export{f as S};

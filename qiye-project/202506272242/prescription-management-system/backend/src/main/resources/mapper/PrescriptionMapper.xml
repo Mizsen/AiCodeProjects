@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.prescription.mapper.PrescriptionMapper">
+  <resultMap id="BaseResultMap" type="com.example.prescription.entity.Prescription">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="prescription_name" jdbcType="VARCHAR" property="prescriptionName" />
+    <result column="indications" jdbcType="VARCHAR" property="indications" />
+    <result column="usage" jdbcType="VARCHAR" property="usage" />
+    <result column="treatment_cycle" jdbcType="VARCHAR" property="treatmentCycle" />
+    <result column="created_time" jdbcType="VARCHAR" property="createdTime" />
+    <result column="created_by" jdbcType="INTEGER" property="createdBy" />
+    <result column="updated_time" jdbcType="VARCHAR" property="updatedTime" />
+    <result column="updated_by" jdbcType="INTEGER" property="updatedBy" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from prescription
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, prescription_name, indications, usage, treatment_cycle, created_time, 
+    created_by, updated_time, updated_by
+    from prescription
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, prescription_name, indications, usage, treatment_cycle, created_time, 
+    created_by, updated_time, updated_by
+    from prescription
+  </select>
+  <!-- 分页查询药方（修正resultMap） -->
+  <select id="pageQuery" resultMap="BaseResultMap">
+      SELECT *
+      FROM prescription
+      <where>
+          <if test="name != null and name != ''">
+              AND prescription_name LIKE '%' || #{name} || '%'
+          </if>
+          <if test="indications != null and indications != ''">
+              AND indications LIKE '%' || #{indications} || '%'
+          </if>
+      </where>
+      ORDER BY created_time DESC
+      LIMIT #{size} OFFSET #{offset}
+  </select>
+
+  <!-- 查询药方总数 -->
+  <select id="count" resultType="int">
+      SELECT COUNT(*)
+      FROM prescription
+      <where>
+          <if test="name != null and name != ''">
+              AND prescription_name LIKE '%' || #{name} || '%'
+          </if>
+          <if test="indications != null and indications != ''">
+              AND indications LIKE '%' || #{indications} || '%'
+          </if>
+      </where>
+  </select>
+
+  <!-- 查询药方详情（包含药品和图片信息，可根据需要扩展resultMap） -->
+  <select id="selectDetailById" parameterType="int" resultMap="BaseResultMap">
+      SELECT *
+      FROM prescription
+      WHERE id = #{id}
+  </select>
+
+  <!-- 插入药方 -->
+  <insert id="insert" parameterType="com.example.prescription.entity.Prescription" useGeneratedKeys="true" keyProperty="id">
+      INSERT INTO prescription
+      (prescription_name, indications, usage, treatment_cycle, created_time, created_by, updated_time, updated_by)
+      VALUES
+      (#{prescriptionName}, #{indications}, #{usage}, #{treatmentCycle}, CURRENT_TIMESTAMP, #{createdBy}, #{updatedTime}, #{updatedBy})
+  </insert>
+
+  <!-- 更新药方 -->
+  <update id="updateByPrimaryKey" parameterType="com.example.prescription.entity.Prescription">
+      UPDATE prescription
+      SET
+          prescription_name = #{prescriptionName},
+          indications = #{indications},
+          usage = #{usage},
+          treatment_cycle = #{treatmentCycle},
+          updated_time = CURRENT_TIMESTAMP,
+          updated_by = #{updatedBy}
+      WHERE id = #{id}
+  </update>
+
+  <!-- 级联删除药方（删除药方、药品关联、图片） SQLite 不支持   -->
+  <delete id="deletePrescriptionByMap" parameterType="map">
+      <!-- 删除 prescription_drug 关联 -->
+      DELETE FROM prescription_drug WHERE prescription_id IN
+      <foreach collection="ids1" item="id" open="(" separator="," close=")">
+          #{id}
+      </foreach>;
+      <!-- 删除 prescription_image 关联 -->
+      DELETE FROM prescription_image WHERE prescription_id IN
+      <foreach collection="ids2" item="id" open="(" separator="," close=")">
+          #{id}
+      </foreach>;
+      <!-- 删除 prescription 主表 -->
+      DELETE FROM prescription WHERE id IN
+      <foreach collection="ids3" item="id" open="(" separator="," close=")">
+          #{id}
+      </foreach>;
+  </delete>
+
+<!-- SQLite 不支持 -->
+  <delete id="deletePrescriptionByMoreList">
+    <!-- 删除 prescription_drug 关联 -->
+    DELETE FROM prescription_drug WHERE prescription_id IN
+    <foreach collection="drugIds" item="id" open="(" separator="," close=")">
+        #{id}
+    </foreach>;
+
+    <!-- 删除 prescription_image 关联 -->
+    DELETE FROM prescription_image WHERE prescription_id IN
+    <foreach collection="imageIds" item="id" open="(" separator="," close=")">
+        #{id}
+    </foreach>;
+
+    <!-- 删除 prescription 主表 -->
+    DELETE FROM prescription WHERE id IN
+    <foreach collection="prescriptionIds" item="id" open="(" separator="," close=")">
+        #{id}
+    </foreach>;
+</delete>
+
+
+  <delete id="deletePrescriptionByIds" parameterType="list">
+    DELETE FROM prescription WHERE id IN
+    <foreach collection="list" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </delete>
+</mapper>
